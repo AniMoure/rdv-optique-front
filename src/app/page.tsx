@@ -1,69 +1,39 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import useSWR from "swr";
+import type { Appointment } from "@/types/appointment";
+
+const API_URL = process.env.PUBLIC_API_URL ?? "http://localhost:3000";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Paris",
+  }).format(new Date(iso));
 
 export default function Home() {
+  const { data, error, isLoading } = useSWR<Appointment[]>(
+    `${API_URL}/appointments`,
+    fetcher,
+  );
+
+  if (error) return <p>Impossible de charger les rendez-vous.</p>;
+  if (isLoading || !data) return <p>Chargement…</p>;
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main style={{ padding: "2rem" }}>
+      <h1>Rendez-vous</h1>
+      <ul>
+        {data.map((appointment) => (
+          <li key={appointment.id}>
+            {appointment.patient_name} – {formatDate(appointment.starts_at)} (
+            {appointment.status})
+          </li>
+        ))}
+      </ul>
+    </main>
   );
 }
