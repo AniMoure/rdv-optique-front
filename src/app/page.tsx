@@ -1,11 +1,9 @@
 "use client";
 
 import useSWR from "swr";
+import AppointmentForm from "@/components/AppointmentForm";
+import { API_URL, fetcher } from "@/lib/api";
 import type { Appointment } from "@/types/appointment";
-
-const API_URL = process.env.PUBLIC_API_URL ?? "http://localhost:3000";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const formatDate = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", {
@@ -15,7 +13,7 @@ const formatDate = (iso: string) =>
   }).format(new Date(iso));
 
 export default function Home() {
-  const { data, error, isLoading } = useSWR<Appointment[]>(
+  const { data, error, isLoading, mutate } = useSWR<Appointment[]>(
     `${API_URL}/appointments`,
     fetcher,
   );
@@ -26,6 +24,7 @@ export default function Home() {
   return (
     <main style={{ padding: "2rem" }}>
       <h1>Rendez-vous</h1>
+      <AppointmentForm onCreated={() => mutate()} />
       <ul>
         {data.map((appointment) => (
           <li key={appointment.id}>
